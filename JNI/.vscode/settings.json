@@ -1,0 +1,27 @@
+{
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-21",
+      "path": "/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home",
+      "default": true
+    }
+  ],
+  "C_Cpp.default.compilerPath": "/usr/bin/clang",
+  "C_Cpp.default.cStandard": "c17",
+  "C_Cpp.default.cppStandard": "c++20",
+  "C_Cpp.default.includePath": [
+    "${workspaceFolder}/**",
+    "/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home/include",
+    "/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home/include/darwin"
+  ],
+  "editor.formatOnSave": true,
+  "[java]": {
+    "editor.defaultFormatter": "redhat.java"
+  },
+  "[c]": {
+    "editor.defaultFormatter": "ms-vscode.cpptools"
+  },
+  "[cpp]": {
+    "editor.defaultFormatter": "ms-vscode.cpptools"
+  }
+}
