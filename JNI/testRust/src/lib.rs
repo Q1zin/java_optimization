@@ -9,17 +9,19 @@ pub extern "system" fn Java_TestJNI_printf<'local>(
     _class: JClass<'local>,
     text: JString<'local>,
 ) -> jint {
-    env.with_env(|_env| -> Result<jint, jni::errors::Error> {
-        let text = text.to_string();
-        let mut stdout = io::stdout().lock();
-        if stdout
-            .write_all(text.as_bytes())
-            .and_then(|()| stdout.flush())
-            .is_err()
-        {
-            return Ok(-1);
-        }
-        Ok(text.len() as jint)
-    })
+    env.with_env(
+        |_env: &mut jni::Env<'_>| -> Result<jint, jni::errors::Error> {
+            let text = text.to_string();
+            let mut stdout = io::stdout().lock();
+            if stdout
+                .write_all(text.as_bytes())
+                .and_then(|()| stdout.flush())
+                .is_err()
+            {
+                return Ok(-1);
+            }
+            Ok(text.len() as jint)
+        },
+    )
     .resolve::<jni::errors::ThrowRuntimeExAndDefault>()
 }
