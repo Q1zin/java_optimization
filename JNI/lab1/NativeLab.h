@@ -47,6 +47,54 @@ JNIEXPORT void JNICALL Java_NativeLab_crashInCallChain
 JNIEXPORT void JNICALL Java_NativeLab_pressureMemory
   (JNIEnv *, jclass);
 
+/*
+ * Class:     NativeLab
+ * Method:    stringLength
+ * Signature: (Ljava/lang/String;)I
+ */
+JNIEXPORT jint JNICALL Java_NativeLab_stringLength
+  (JNIEnv *, jclass, jstring);
+
+/*
+ * Class:     NativeLab
+ * Method:    callBeanMethod
+ * Signature: (LBean;)V
+ */
+JNIEXPORT void JNICALL Java_NativeLab_callBeanMethod
+  (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     NativeLab
+ * Method:    changeBeanInt
+ * Signature: (LBean;I)V
+ */
+JNIEXPORT void JNICALL Java_NativeLab_changeBeanInt
+  (JNIEnv *, jclass, jobject, jint);
+
+/*
+ * Class:     NativeLab
+ * Method:    createNativeData
+ * Signature: (I)J
+ */
+JNIEXPORT jlong JNICALL Java_NativeLab_createNativeData
+  (JNIEnv *, jclass, jint);
+
+/*
+ * Class:     NativeLab
+ * Method:    readNativeData
+ * Signature: (J)I
+ */
+JNIEXPORT jint JNICALL Java_NativeLab_readNativeData
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     NativeLab
+ * Method:    freeNativeData
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_NativeLab_freeNativeData
+  (JNIEnv *, jclass, jlong);
+
 #ifdef __cplusplus
 }
 #endif

@@ -159,3 +159,173 @@ JNIEXPORT void JNICALL Java_NativeLab_pressureMemory(
         head = next;
     }
 }
+
+JNIEXPORT jint JNICALL Java_NativeLab_stringLength(
+    JNIEnv *env, jclass clazz, jstring text)
+{
+    (void)clazz;
+
+    if (text == NULL)
+    {
+        jclass exceptionClass = (*env)->FindClass(
+            env, "java/lang/NullPointerException");
+
+        if (exceptionClass != NULL)
+        {
+            (*env)->ThrowNew(
+                env, exceptionClass, "text must not be null");
+        }
+
+        return 0;
+    }
+
+    return (*env)->GetStringLength(env, text);
+}
+
+JNIEXPORT void JNICALL Java_NativeLab_callBeanMethod(
+    JNIEnv *env, jclass clazz, jobject bean)
+{
+    (void)clazz;
+
+    if (bean == NULL)
+    {
+        jclass exceptionClass = (*env)->FindClass(
+            env, "java/lang/NullPointerException");
+
+        if (exceptionClass != NULL)
+        {
+            (*env)->ThrowNew(
+                env, exceptionClass, "bean must not be null");
+        }
+
+        return;
+    }
+
+    jclass beanClass = (*env)->GetObjectClass(env, bean);
+
+    if (beanClass == NULL)
+    {
+        return;
+    }
+
+    jmethodID getter = (*env)->GetMethodID(
+        env, beanClass, "getIntValue", "()I");
+
+    if (getter == NULL)
+    {
+        return;
+    }
+
+    jint value = (*env)->CallIntMethod(env, bean, getter);
+
+    if ((*env)->ExceptionCheck(env))
+    {
+        return;
+    }
+
+    printf("C called Bean.getIntValue(): %d\n", (int)value);
+    fflush(stdout);
+}
+
+JNIEXPORT void JNICALL Java_NativeLab_changeBeanInt(
+    JNIEnv *env, jclass clazz, jobject bean, jint value)
+{
+    (void)clazz;
+
+    if (bean == NULL)
+    {
+        jclass exceptionClass = (*env)->FindClass(
+            env, "java/lang/NullPointerException");
+
+        if (exceptionClass != NULL)
+        {
+            (*env)->ThrowNew(
+                env, exceptionClass, "bean must not be null");
+        }
+
+        return;
+    }
+
+    jclass beanClass = (*env)->GetObjectClass(env, bean);
+
+    if (beanClass == NULL)
+    {
+        return;
+    }
+
+    jfieldID field = (*env)->GetFieldID(
+        env, beanClass, "intValue", "I");
+
+    if (field == NULL)
+    {
+        return;
+    }
+
+    (*env)->SetIntField(env, bean, field, value);
+}
+
+typedef struct NativeData
+{
+    jint value;
+} NativeData;
+
+JNIEXPORT jlong JNICALL Java_NativeLab_createNativeData(
+    JNIEnv *env, jclass clazz, jint value)
+{
+    (void)clazz;
+
+    NativeData *data = malloc(sizeof(*data));
+
+    if (data == NULL)
+    {
+        jclass exceptionClass = (*env)->FindClass(
+            env, "java/lang/OutOfMemoryError");
+
+        if (exceptionClass != NULL)
+        {
+            (*env)->ThrowNew(
+                env, exceptionClass, "Cannot allocate NativeData");
+        }
+
+        return 0;
+    }
+
+    data->value = value;
+
+    return (jlong)(intptr_t)data;
+}
+
+JNIEXPORT jint JNICALL Java_NativeLab_readNativeData(
+    JNIEnv *env, jclass clazz, jlong address)
+{
+    (void)clazz;
+
+    if (address == 0)
+    {
+        jclass exceptionClass = (*env)->FindClass(
+            env, "java/lang/IllegalArgumentException");
+
+        if (exceptionClass != NULL)
+        {
+            (*env)->ThrowNew(
+                env, exceptionClass, "NativeData address must not be zero");
+        }
+
+        return 0;
+    }
+
+    NativeData *data = (NativeData *)(intptr_t)address;
+
+    return data->value;
+}
+
+JNIEXPORT void JNICALL Java_NativeLab_freeNativeData(
+    JNIEnv *env, jclass clazz, jlong address)
+{
+    (void)env;
+    (void)clazz;
+
+    NativeData *data = (NativeData *)(intptr_t)address;
+
+    free(data);
+}

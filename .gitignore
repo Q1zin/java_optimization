@@ -1,0 +1,27 @@
+# macOS
+.DS_Store
+
+# Java bytecode
+*.class
+
+# Native build artifacts (C/C++, JNI)
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+*.dSYM/
+
+# JVM fatal error logs and memory dumps
+hs_err_pid*.log
+replay_pid*.log
+*.hprof
+core
+core.*
+
+# Rust / Cargo build artifacts; keep Cargo.lock
+target/

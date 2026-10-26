@@ -12,4 +12,16 @@ public class NativeLab {
     public static native void crashInCallChain();
 
     public static native void pressureMemory();
+
+    public static native int stringLength(String text);
+
+    public static native void callBeanMethod(Bean bean);
+
+    public static native void changeBeanInt(Bean bean, int value);
+
+    public static native long createNativeData(int value);
+
+    public static native int readNativeData(long address);
+
+    public static native void freeNativeData(long address);
 }
