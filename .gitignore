@@ -25,3 +25,7 @@ core.*
 
 # Rust / Cargo build artifacts; keep Cargo.lock
 target/
+
+# gradle
+*.gradle/
+*build/
