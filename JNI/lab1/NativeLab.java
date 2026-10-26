@@ -24,4 +24,6 @@ public class NativeLab {
     public static native int readNativeData(long address);
 
     public static native void freeNativeData(long address);
+
+    public static native int initNativeSentry();
 }

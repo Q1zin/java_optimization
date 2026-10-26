@@ -48,6 +48,18 @@ public class Main {
             NativeLab.stringLength(null);
             return;
         }
+        if (args.length > 0 && args[0].equals("sentry-native")) {
+            int result = NativeLab.initNativeSentry();
+
+            if (result != 0) {
+                throw new IllegalStateException(
+                        "Sentry Native initialization failed: " + result);
+            }
+
+            System.err.println("Sentry Native initialized; triggering crash");
+            NativeLab.crashInCallChain();
+            return;
+        }
         if (args.length > 0 && args[0].equals("crash")) {
             NativeLab.crashInCallChain();
             return;
