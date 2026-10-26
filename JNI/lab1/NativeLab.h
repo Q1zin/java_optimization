@@ -95,14 +95,6 @@ JNIEXPORT jint JNICALL Java_NativeLab_readNativeData
 JNIEXPORT void JNICALL Java_NativeLab_freeNativeData
   (JNIEnv *, jclass, jlong);
 
-/*
- * Class:     NativeLab
- * Method:    initNativeSentry
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_NativeLab_initNativeSentry
-  (JNIEnv *, jclass);
-
 #ifdef __cplusplus
 }
 #endif
