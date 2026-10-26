@@ -35,4 +35,5 @@ tasks.withType(JavaCompile).configureEach {
 
 tasks.named('run') {
     systemProperty 'java.library.path', projectDir.absolutePath
+    jvmArgs '-Xms32m', '-Xmx32m', '-Xcheck:jni'
 }
