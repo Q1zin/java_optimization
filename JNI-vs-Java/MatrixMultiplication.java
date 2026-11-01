@@ -7,8 +7,6 @@ public class MatrixMultiplication {
 
     public static native double[] toArray(long matrix);
 
-    public static native void fillRandom(long matrix, long seed);
-
     public static native void multiply(long a, long b, long c);
 
     public static native void free(long matrix);

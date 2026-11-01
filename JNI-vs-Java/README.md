@@ -7,10 +7,12 @@ javac -h native/ MatrixMultiplication.java
 
 Написание `MatrixMultiplication.c` файла, компиляция в динамическую библиотеку (macOS)
 ```bash
-gcc -O2 -fPIC -I $JAVA_HOME/include -I $JAVA_HOME/include/darwin -shared -o native/libMatrixMultiplication.dylib native/MatrixMultiplication.c
+gcc -O2 -ffp-contract=off -fPIC -I $JAVA_HOME/include -I $JAVA_HOME/include/darwin -shared -o native/libMatrixMultiplication.dylib native/MatrixMultiplication.c
 ```
 
 p.s. в моём случае `JAVA_HOME=$(/usr/libexec/java_home -v 21)`
+
+- `-ffp-contract=off` - запрещает сливать `sum += a * b` в одну инструкцию FMA (`fmadd`). Java всегда считает умножение и сложение отдельно, с этим флагом C считает так же, и результаты совпадают до бита
 
 Пишем основной модуль `Main.java`, загружаем в нём библиотеку `MatrixMultiplication` 
 ```bash

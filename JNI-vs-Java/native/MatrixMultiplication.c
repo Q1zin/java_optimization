@@ -77,17 +77,6 @@ JNIEXPORT jdoubleArray JNICALL Java_MatrixMultiplication_toArray(JNIEnv *env, jc
     return values;
 }
 
-JNIEXPORT void JNICALL Java_MatrixMultiplication_fillRandom(JNIEnv *env, jclass clazz, jlong handle, jlong seed) {
-    Matrix *matrix = toMatrix(handle);
-    size_t count = (size_t)matrix->rows * matrix->cols;
-    // erand48 хранит состояние в переданном массиве, а не в глобальной переменной, как rand()
-    unsigned short state[3] = { (unsigned short)seed, (unsigned short)(seed >> 16), (unsigned short)(seed >> 32) };
-
-    for (size_t i = 0; i < count; i++) {
-        matrix->data[i] = erand48(state);
-    }
-}
-
 JNIEXPORT void JNICALL Java_MatrixMultiplication_multiply(JNIEnv *env, jclass clazz, jlong aHandle, jlong bHandle, jlong cHandle) {
     Matrix *a = toMatrix(aHandle);
     Matrix *b = toMatrix(bHandle);

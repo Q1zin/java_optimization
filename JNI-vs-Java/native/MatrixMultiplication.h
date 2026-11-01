@@ -41,14 +41,6 @@ JNIEXPORT jdoubleArray JNICALL Java_MatrixMultiplication_toArray
 
 /*
  * Class:     MatrixMultiplication
- * Method:    fillRandom
- * Signature: (JJ)V
- */
-JNIEXPORT void JNICALL Java_MatrixMultiplication_fillRandom
-  (JNIEnv *, jclass, jlong, jlong);
-
-/*
- * Class:     MatrixMultiplication
  * Method:    multiply
  * Signature: (JJJ)V
  */
