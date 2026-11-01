@@ -51,9 +51,12 @@ public class Main {
             }
         }
 
-        if (different != 0) {
+        if (different != 0 && javaResult.length <= 16) {
             System.out.println("Java result: " + Arrays.toString(javaResult));
             System.out.println("C result:    " + Arrays.toString(nativeResult));
+        }
+
+        if (different != 0) {
             System.out.println("Java vs C: различаются " + different + " из " + javaResult.length
                     + " элементов, макс. разница " + maxDifference);
         }
