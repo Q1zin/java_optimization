@@ -7,7 +7,7 @@ javac -h native/ MatrixMultiplication.java
 
 Написание `MatrixMultiplication.c` файла, компиляция в динамическую библиотеку (macOS)
 ```bash
-gcc -fPIC -I $JAVA_HOME/include -I $JAVA_HOME/include/darwin -shared -o native/libMatrixMultiplication.dylib native/MatrixMultiplication.c
+gcc -O2 -fPIC -I $JAVA_HOME/include -I $JAVA_HOME/include/darwin -shared -o native/libMatrixMultiplication.dylib native/MatrixMultiplication.c
 ```
 
 p.s. в моём случае `JAVA_HOME=$(/usr/libexec/java_home -v 21)`

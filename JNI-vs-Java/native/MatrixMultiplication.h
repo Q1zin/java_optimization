@@ -15,6 +15,54 @@ extern "C" {
 JNIEXPORT jboolean JNICALL Java_MatrixMultiplication_health
   (JNIEnv *, jclass);
 
+/*
+ * Class:     MatrixMultiplication
+ * Method:    create
+ * Signature: (II)J
+ */
+JNIEXPORT jlong JNICALL Java_MatrixMultiplication_create
+  (JNIEnv *, jclass, jint, jint);
+
+/*
+ * Class:     MatrixMultiplication
+ * Method:    fromArray
+ * Signature: (II[D)J
+ */
+JNIEXPORT jlong JNICALL Java_MatrixMultiplication_fromArray
+  (JNIEnv *, jclass, jint, jint, jdoubleArray);
+
+/*
+ * Class:     MatrixMultiplication
+ * Method:    toArray
+ * Signature: (J)[D
+ */
+JNIEXPORT jdoubleArray JNICALL Java_MatrixMultiplication_toArray
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     MatrixMultiplication
+ * Method:    fillRandom
+ * Signature: (JJ)V
+ */
+JNIEXPORT void JNICALL Java_MatrixMultiplication_fillRandom
+  (JNIEnv *, jclass, jlong, jlong);
+
+/*
+ * Class:     MatrixMultiplication
+ * Method:    multiply
+ * Signature: (JJJ)V
+ */
+JNIEXPORT void JNICALL Java_MatrixMultiplication_multiply
+  (JNIEnv *, jclass, jlong, jlong, jlong);
+
+/*
+ * Class:     MatrixMultiplication
+ * Method:    free
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_MatrixMultiplication_free
+  (JNIEnv *, jclass, jlong);
+
 #ifdef __cplusplus
 }
 #endif
