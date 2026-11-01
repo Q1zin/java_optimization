@@ -8,6 +8,11 @@ public class Main {
     private static final long WARMUP_NANOS = 500_000_000L;
     private static final int MEASURED_RUNS = 10;
 
+    private static void printCheck(String label, double[] result) {
+        System.out.println(label + " 2x2: " + Arrays.toString(result)
+                + (Arrays.equals(result, EXPECTED_2X2) ? " OK" : " FAIL"));
+    }
+
     private static void checkSmall() {
         // [[1, 2], [3, 4]] · [[5, 6], [7, 8]] = [[19, 22], [43, 50]]
         JavaMatrix a = new JavaMatrix(2, 2, new double[] { 1, 2, 3, 4 });
@@ -15,20 +20,20 @@ public class Main {
         JavaMatrix c = new JavaMatrix(2, 2);
 
         JavaMatrix.multiply(a, b, c);
+        printCheck("Java ijk", c.data);
 
-        System.out.println("Java 2x2: " + Arrays.toString(c.data)
-                + (Arrays.equals(c.data, EXPECTED_2X2) ? " OK" : " FAIL"));
+        JavaMatrix.multiplyIkj(a, b, c);
+        printCheck("Java ikj", c.data);
 
         long nativeA = MatrixMultiplication.fromArray(2, 2, a.data);
         long nativeB = MatrixMultiplication.fromArray(2, 2, b.data);
         long nativeC = MatrixMultiplication.create(2, 2);
 
         MatrixMultiplication.multiply(nativeA, nativeB, nativeC);
+        printCheck("C ijk", MatrixMultiplication.toArray(nativeC));
 
-        double[] result = MatrixMultiplication.toArray(nativeC);
-
-        System.out.println("C 2x2: " + Arrays.toString(result)
-                + (Arrays.equals(result, EXPECTED_2X2) ? " OK" : " FAIL"));
+        MatrixMultiplication.multiplyIkj(nativeA, nativeB, nativeC);
+        printCheck("C ikj", MatrixMultiplication.toArray(nativeC));
 
         MatrixMultiplication.free(nativeA);
         MatrixMultiplication.free(nativeB);
@@ -66,7 +71,23 @@ public class Main {
         return 100.0 * (max - min) / mean(times);
     }
 
-    private static void benchmark(int n) {
+    private static void multiplyJava(boolean ikj, JavaMatrix x, JavaMatrix y, JavaMatrix z) {
+        if (ikj) {
+            JavaMatrix.multiplyIkj(x, y, z);
+        } else {
+            JavaMatrix.multiply(x, y, z);
+        }
+    }
+
+    private static void multiplyNative(boolean ikj, long x, long y, long z) {
+        if (ikj) {
+            MatrixMultiplication.multiplyIkj(x, y, z);
+        } else {
+            MatrixMultiplication.multiply(x, y, z);
+        }
+    }
+
+    private static void benchmark(int n, boolean ikj) {
         JavaMatrix x = new JavaMatrix(n, n);
         JavaMatrix y = new JavaMatrix(n, n);
         JavaMatrix z = new JavaMatrix(n, n);
@@ -85,18 +106,18 @@ public class Main {
         long warmupStart = System.nanoTime();
 
         for (int run = 0; run < WARMUP_RUNS || System.nanoTime() - warmupStart < WARMUP_NANOS; run++) {
-            JavaMatrix.multiply(x, y, z);
-            MatrixMultiplication.multiply(nativeX, nativeY, nativeZ);
+            multiplyJava(ikj, x, y, z);
+            multiplyNative(ikj, nativeX, nativeY, nativeZ);
         }
 
         // Java и C по очереди, чтобы нагрев процессора и фоновые задачи влияли на обоих одинаково
         for (int run = 0; run < MEASURED_RUNS; run++) {
             long start = System.nanoTime();
-            JavaMatrix.multiply(x, y, z);
+            multiplyJava(ikj, x, y, z);
             javaTimes[run] = System.nanoTime() - start;
 
             start = System.nanoTime();
-            MatrixMultiplication.multiply(nativeX, nativeY, nativeZ);
+            multiplyNative(ikj, nativeX, nativeY, nativeZ);
             nativeTimes[run] = System.nanoTime() - start;
         }
 
@@ -111,8 +132,8 @@ public class Main {
         // На каждом из N³ шагов одно умножение и одно сложение
         double flops = 2.0 * n * n * n;
 
-        System.out.printf("%5d | %8.2f | %6.0f%% | %8.2f | %6.0f%% | %11.2f | %8.2f | %.2f%n",
-                n, javaMs, spread(javaTimes), nativeMs, spread(nativeTimes),
+        System.out.printf("%5d | %7s | %8.2f | %6.0f%% | %8.2f | %6.0f%% | %11.2f | %8.2f | %.2f%n",
+                n, ikj ? "ikj" : "ijk", javaMs, spread(javaTimes), nativeMs, spread(nativeTimes),
                 flops / javaMs / 1e6, flops / nativeMs / 1e6, javaMs / nativeMs);
     }
 
@@ -127,11 +148,12 @@ public class Main {
                 ? Arrays.stream(args).mapToInt(Integer::parseInt).toArray()
                 : new int[] { 64, 128, 256, 512, 1024 };
 
-        System.out.printf("%n%5s | %8s | %7s | %8s | %7s | %11s | %8s | %s%n",
-                "N", "Java, ms", "разброс", "C, ms", "разброс", "Java GFLOPS", "C GFLOPS", "t Java / t C");
+        System.out.printf("%n%5s | %7s | %8s | %7s | %8s | %7s | %11s | %8s | %s%n",
+                "N", "порядок", "Java, ms", "разброс", "C, ms", "разброс", "Java GFLOPS", "C GFLOPS", "t Java / t C");
 
         for (int n : sizes) {
-            benchmark(n);
+            benchmark(n, false);
+            benchmark(n, true);
         }
     }
 

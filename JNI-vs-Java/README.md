@@ -14,6 +14,8 @@ p.s. в моём случае `JAVA_HOME=$(/usr/libexec/java_home -v 21)`
 
 - `-ffp-contract=off` - запрещает сливать `sum += a * b` в одну инструкцию FMA (`fmadd`). Java всегда считает умножение и сложение отдельно, с этим флагом C считает так же, и результаты совпадают до бита
 
+- `-fno-vectorize` - отключает SIMD
+
 Пишем основной модуль `Main.java`, загружаем в нём библиотеку `MatrixMultiplication` 
 ```bash
 javac Main.java
@@ -25,6 +27,8 @@ java --enable-native-access=ALL-UNNAMED -Djava.library.path=native Main
 ```
 
 где `--enable-native-access=ALL-UNNAMED` - отвечает за разрешение вызовов нативного кода, а `-Djava.library.path=native` - где искать библиотеку (либо `DYLD_LIBRARY_PATH`).
+
+- `-XX:+UseSuperWord` - включает SIMD, но ничего не изменится
 
 ## Прогрев JIT
 

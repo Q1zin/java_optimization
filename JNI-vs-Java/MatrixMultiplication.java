@@ -9,5 +9,7 @@ public class MatrixMultiplication {
 
     public static native void multiply(long a, long b, long c);
 
+    public static native void multiplyIkj(long a, long b, long c);
+
     public static native void free(long matrix);
 }

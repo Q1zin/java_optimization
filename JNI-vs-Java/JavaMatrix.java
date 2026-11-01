@@ -1,3 +1,4 @@
+import java.util.Arrays;
 import java.util.Random;
 
 public class JavaMatrix {
@@ -28,10 +29,15 @@ public class JavaMatrix {
         }
     }
 
-    static void multiply(JavaMatrix a, JavaMatrix b, JavaMatrix c) {
+    private static void checkSizes(JavaMatrix a, JavaMatrix b, JavaMatrix c) {
         if (a.cols != b.rows || c.rows != a.rows || c.cols != b.cols) {
             throw new IllegalArgumentException("Несогласованные размеры матриц");
         }
+    }
+
+    // Порядок ijk
+    static void multiply(JavaMatrix a, JavaMatrix b, JavaMatrix c) {
+        checkSizes(a, b, c);
 
         int n = a.rows;
         int m = a.cols;
@@ -46,6 +52,27 @@ public class JavaMatrix {
                 }
 
                 c.data[i * p + j] = sum;
+            }
+        }
+    }
+
+    // Порядок ikj
+    static void multiplyIkj(JavaMatrix a, JavaMatrix b, JavaMatrix c) {
+        checkSizes(a, b, c);
+
+        int n = a.rows;
+        int m = a.cols;
+        int p = b.cols;
+
+        Arrays.fill(c.data, 0);
+
+        for (int i = 0; i < n; i++) {
+            for (int k = 0; k < m; k++) {
+                double aik = a.data[i * m + k];
+
+                for (int j = 0; j < p; j++) {
+                    c.data[i * p + j] += aik * b.data[k * p + j];
+                }
             }
         }
     }

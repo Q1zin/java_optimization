@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "MatrixMultiplication.h"
 
@@ -77,13 +78,22 @@ JNIEXPORT jdoubleArray JNICALL Java_MatrixMultiplication_toArray(JNIEnv *env, jc
     return values;
 }
 
+static int checkSizes(JNIEnv *env, Matrix *a, Matrix *b, Matrix *c) {
+    if (a->cols != b->rows || c->rows != a->rows || c->cols != b->cols) {
+        throwException(env, "java/lang/IllegalArgumentException", "Несогласованные размеры матриц");
+        return 0;
+    }
+
+    return 1;
+}
+
+// Порядок ijk: во внутреннем цикле B читается по столбцу, с шагом в целую строку
 JNIEXPORT void JNICALL Java_MatrixMultiplication_multiply(JNIEnv *env, jclass clazz, jlong aHandle, jlong bHandle, jlong cHandle) {
     Matrix *a = toMatrix(aHandle);
     Matrix *b = toMatrix(bHandle);
     Matrix *c = toMatrix(cHandle);
 
-    if (a->cols != b->rows || c->rows != a->rows || c->cols != b->cols) {
-        throwException(env, "java/lang/IllegalArgumentException", "Несогласованные размеры матриц");
+    if (!checkSizes(env, a, b, c)) {
         return;
     }
 
@@ -100,6 +110,33 @@ JNIEXPORT void JNICALL Java_MatrixMultiplication_multiply(JNIEnv *env, jclass cl
             }
 
             c->data[i * p + j] = sum;
+        }
+    }
+}
+
+// Порядок ikj: во внутреннем цикле B и C читаются по строке, подряд
+JNIEXPORT void JNICALL Java_MatrixMultiplication_multiplyIkj(JNIEnv *env, jclass clazz, jlong aHandle, jlong bHandle, jlong cHandle) {
+    Matrix *a = toMatrix(aHandle);
+    Matrix *b = toMatrix(bHandle);
+    Matrix *c = toMatrix(cHandle);
+
+    if (!checkSizes(env, a, b, c)) {
+        return;
+    }
+
+    size_t n = a->rows;
+    size_t m = a->cols;
+    size_t p = b->cols;
+
+    memset(c->data, 0, n * p * sizeof(double));
+
+    for (size_t i = 0; i < n; i++) {
+        for (size_t k = 0; k < m; k++) {
+            double aik = a->data[i * m + k];
+
+            for (size_t j = 0; j < p; j++) {
+                c->data[i * p + j] += aik * b->data[k * p + j];
+            }
         }
     }
 }
