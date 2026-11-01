@@ -57,6 +57,14 @@ JNIEXPORT void JNICALL Java_MatrixMultiplication_multiplyIkj
 
 /*
  * Class:     MatrixMultiplication
+ * Method:    multiplyIkjArrays
+ * Signature: ([D[D[DI)V
+ */
+JNIEXPORT void JNICALL Java_MatrixMultiplication_multiplyIkjArrays
+  (JNIEnv *, jclass, jdoubleArray, jdoubleArray, jdoubleArray, jint);
+
+/*
+ * Class:     MatrixMultiplication
  * Method:    free
  * Signature: (J)V
  */

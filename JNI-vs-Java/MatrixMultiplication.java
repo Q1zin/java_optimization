@@ -11,5 +11,7 @@ public class MatrixMultiplication {
 
     public static native void multiplyIkj(long a, long b, long c);
 
+    public static native void multiplyIkjArrays(double[] a, double[] b, double[] c, int n);
+
     public static native void free(long matrix);
 }

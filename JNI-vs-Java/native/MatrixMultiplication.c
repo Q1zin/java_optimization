@@ -115,15 +115,7 @@ JNIEXPORT void JNICALL Java_MatrixMultiplication_multiply(JNIEnv *env, jclass cl
 }
 
 // Порядок ikj: во внутреннем цикле B и C читаются по строке, подряд
-JNIEXPORT void JNICALL Java_MatrixMultiplication_multiplyIkj(JNIEnv *env, jclass clazz, jlong aHandle, jlong bHandle, jlong cHandle) {
-    Matrix *a = toMatrix(aHandle);
-    Matrix *b = toMatrix(bHandle);
-    Matrix *c = toMatrix(cHandle);
-
-    if (!checkSizes(env, a, b, c)) {
-        return;
-    }
-
+static void multiplyIkjMatrices(Matrix *a, Matrix *b, Matrix *c) {
     size_t n = a->rows;
     size_t m = a->cols;
     size_t p = b->cols;
@@ -138,6 +130,53 @@ JNIEXPORT void JNICALL Java_MatrixMultiplication_multiplyIkj(JNIEnv *env, jclass
                 c->data[i * p + j] += aik * b->data[k * p + j];
             }
         }
+    }
+}
+
+JNIEXPORT void JNICALL Java_MatrixMultiplication_multiplyIkj(JNIEnv *env, jclass clazz, jlong aHandle, jlong bHandle, jlong cHandle) {
+    Matrix *a = toMatrix(aHandle);
+    Matrix *b = toMatrix(bHandle);
+    Matrix *c = toMatrix(cHandle);
+
+    if (!checkSizes(env, a, b, c)) {
+        return;
+    }
+
+    multiplyIkjMatrices(a, b, c);
+}
+
+// Умножает Java-массивы n×n без копирования: GetPrimitiveArrayCritical даёт указатель прямо на данные массива
+JNIEXPORT void JNICALL Java_MatrixMultiplication_multiplyIkjArrays(JNIEnv *env, jclass clazz, jdoubleArray aArray, jdoubleArray bArray, jdoubleArray cArray, jint n) {
+    jsize length = n * n;
+
+    if ((*env)->GetArrayLength(env, aArray) != length || (*env)->GetArrayLength(env, bArray) != length
+            || (*env)->GetArrayLength(env, cArray) != length) {
+        throwException(env, "java/lang/IllegalArgumentException", "Длина массивов должна быть n * n");
+        return;
+    }
+
+    // Пока массивы захвачены, другие JNI-функции вызывать нельзя, а GC ждёт: держим их только на время умножения
+    double *a = (*env)->GetPrimitiveArrayCritical(env, aArray, NULL);
+    double *b = (*env)->GetPrimitiveArrayCritical(env, bArray, NULL);
+    double *c = (*env)->GetPrimitiveArrayCritical(env, cArray, NULL);
+
+    if (a != NULL && b != NULL && c != NULL) {
+        Matrix matrixA = { n, n, a };
+        Matrix matrixB = { n, n, b };
+        Matrix matrixC = { n, n, c };
+
+        multiplyIkjMatrices(&matrixA, &matrixB, &matrixC);
+    }
+
+    // JNI_ABORT: A и B не менялись, и даже если JVM дала копию, записывать её обратно не нужно
+    if (c != NULL) {
+        (*env)->ReleasePrimitiveArrayCritical(env, cArray, c, 0);
+    }
+    if (b != NULL) {
+        (*env)->ReleasePrimitiveArrayCritical(env, bArray, b, JNI_ABORT);
+    }
+    if (a != NULL) {
+        (*env)->ReleasePrimitiveArrayCritical(env, aArray, a, JNI_ABORT);
     }
 }
 

@@ -57,7 +57,7 @@ public class JniCostDemo {
             long nativeZ = MatrixMultiplication.create(n, n);
 
             // Чем меньше матрица, тем больше вызовов, чтобы каждый замер длился заметное время
-            int calls = Math.max(1000, 50_000_000 / (n * n * n));
+            int calls = (int) Math.max(1000, 50_000_000L / ((long) n * n * n));
 
             javaNanos(x, y, z, calls);
             double java = javaNanos(x, y, z, calls);
