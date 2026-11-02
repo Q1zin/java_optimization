@@ -148,7 +148,7 @@ C, N=256 (Java для сравнения: ijk ≈ 13.9 ms, ikj ≈ 5.8 ms):
 | `-O1 -ffp-contract=off` | 12.8 ms | 5.89 ms | да |
 | `-O2 -ffp-contract=off` | 13.0 ms | 2.63 ms | да |
 | `-O3 -ffp-contract=off` | 12.7 ms | 2.56 ms | да |
-| `-O2 -ffp-contract=off -fno-vectorize` | 13.0 ms | 5.90 ms | да |
+| `-O2 -ffp-contract=off -fno-tree-vectorize` | 13.0 ms | 5.90 ms | да |
 | `-O2` (с FMA) | 15.6 ms | 2.66 ms | нет, разница ~4e-14 |
 | `-O2 -ffast-math` | 15.3 ms | 2.65 ms | нет, разница ~4e-14 |
 
@@ -191,4 +191,68 @@ java -XX:-UseSuperWord VectorizeDemo
 - первые два цикла JIT векторизует: без SuperWord они медленнее. Третий - нет: время одинаковое
 - причина - возможное пересечение массивов. Если `c` и `b` - один и тот же массив, а смещения разные, запись в `c[off1 + j]` может изменить то, что следующие итерации прочитают из `b[off2 + j]`. JIT в JDK 21 не может доказать, что это разные массивы, и не векторизует
 - clang в той же ситуации вставляет перед векторным циклом проверку во время выполнения (в LLVM IR это блоки `vector.memcheck`): если массивы пересекаются, работает обычный цикл, если нет - векторный
+
+## Windows 11, x86-64
+
+Те же тесты на втором устройстве: AMD Ryzen AI 9 HX 370 (Zen 5, есть AVX2, AVX-512 и FMA), Windows 11 Pro, Temurin JDK 21.0.13, clang 20.1.8 (MSYS2 clang64) и gcc 15.2 (MSYS2 ucrt64). Команды - в Git Bash
+```bash
+export JAVA_HOME=~/jdk21 PATH=~/jdk21/bin:/c/msys64/clang64/bin:$PATH
+javac -h native/ MatrixMultiplication.java
+clang -O2 -ffp-contract=off -I "$JAVA_HOME/include" -I "$JAVA_HOME/include/win32" -shared -o native/MatrixMultiplication.dll native/MatrixMultiplication.c
+javac Main.java
+java -Dstdout.encoding=UTF-8 -Djava.library.path=native Main
+CC=clang ./flags.sh        # или CC=/c/msys64/ucrt64/bin/gcc ./flags.sh
+```
+
+- на Windows `System.loadLibrary("MatrixMultiplication")` ищет `MatrixMultiplication.dll` (без `lib`), а заголовки JNI лежат в `include/win32`
+- `-Dstdout.encoding=UTF-8`: когда вывод идёт не в консоль, а в pipe, Java на Windows пишет в системной кодировке, и кириллица ломается
+- `clang` из `C:\Program Files\LLVM` собирает под MSVC и без Visual Studio не может слинковать DLL, поэтому clang - из MSYS2
+
+`Main`, данные из одного прогона:
+
+| N | Java ijk | C ijk | Java ikj | C ikj | C ikj, GFLOPS |
+|---|---|---|---|---|---|
+| 64 | 0.12 ms | 0.07 ms | 0.07 ms | 0.04 ms | 12.4 |
+| 256 | 14.8 ms | 16.8 ms | 4.54 ms | 2.38 ms | 14.1 |
+| 510 | 82 ms | 75 ms | 33 ms | 20 ms | 13.4 |
+| 512 | 197 ms | 236 ms | 39 ms | 20 ms | 13.6 |
+| 1000 | 683 ms | 696 ms | 303 ms | 182 ms | 11.0 |
+| 1023 | 801 ms | 756 ms | 291 ms | 182 ms | 11.8 |
+| 1024 | 3361 ms | 3465 ms | 315 ms | 162 ms | 13.3 |
+
+Флаги C, N=256 (Java: ijk ≈ 17 ms, ikj ≈ 5.3 ms):
+
+| Флаги | clang ikj | gcc ikj |
+|---|---|---|
+| `-O0 -ffp-contract=off` | 26.1 ms | 33.4 ms |
+| `-O1 -ffp-contract=off` | 5.66 ms | 8.58 ms |
+| `-O2 -ffp-contract=off` | 3.22 ms | 5.50 ms (не векторизует) |
+| `-O3 -ffp-contract=off` | 2.99 ms | 2.56 ms |
+| `-O2 -ffp-contract=off -fno-tree-vectorize` | 5.01 ms | 5.82 ms |
+| `-O2 -ffp-contract=off -march=native` | 1.78 ms | 5.47 ms (не векторизует) |
+| `-O3 -ffp-contract=off -march=native` | 1.85 ms | 2.00 ms |
+
+Сравнение с macOS (M1 Pro):
+
+| Что | macOS, M1 Pro | Windows, Ryzen AI 9 HX 370 |
+|---|---|---|
+| провал ijk на N=512 (против 510/514) | +10% | в 2.4 раза |
+| провал ijk на N=1024 (против 1023/1025) | +50% | в 4 раза |
+| C ikj при нечётном N | на 10-20% медленнее | разницы нет |
+| C ikj, clang `-O2` | 2.6 ms | 3.2 ms (только SSE2) |
+| C ikj, лучший вариант | 2.6 ms | 1.78 ms (`-march=native`) |
+| пустой JNI-вызов | 3.1 ns | 7.2 ns |
+| «C без копии» при N=1 | 453 ns | 103 ns |
+| `fromArray` + `free` при N=1 | 176 ns | 89 ns |
+| `toArray` при N=1 | 122 ns | 48 ns |
+| с какого N C через JNI быстрее Java: данные в C / без копии / с копией | 4-8 / 16 / 32 | 2-4 / 8 / 32 |
+
+- провал на степенях двойки на Zen 5 в разы сильнее: кэш L1 там меньше и устроен иначе, чем у M1, и при шаге по столбцу ровно 4 или 8 КБ элементы сильнее вытесняют друг друга (гипотеза). Порядок ikj снова от этого спасает
+- чётность N на x86 не влияет: невыровненные векторные загрузки здесь почти бесплатны
+- без `-march=native` компилятор берёт только базовый набор x86-64 (SSE2: 2 double за инструкцию, без FMA), поэтому C на `-O2` медленнее, чем на M1. С `-march=native` (векторы AVX2/AVX-512 и FMA) C ikj в ~3 раза быстрее Java. JIT сам использует возможности процессора, но наш цикл ikj всё равно не векторизует - по той же причине, что и на маке (`VectorizeDemo` показывает ту же картину)
+- FMA на x86 появляется только с `-march=native`. Без него сборка без `-ffp-contract=off` совпадает с Java до бита. С FMA различаются те же 21592 из 65536 элементов, что и на маке: FMA по стандарту IEEE 754 считает одинаково на любом процессоре
+- gcc на `-O2` ikj не векторизует даже с `-march=native`: на `-O2` gcc векторизует только там, где не нужна проверка пересечения массивов во время выполнения. На `-O3` векторизует и обгоняет clang без `-march=native` (2.56 против 2.99 ms)
+- пустой JNI-вызов на Windows дороже (7.2 против 3.1 ns), зато JNI-функции, которые работают с Java-объектами, в 2-4 раза дешевле. Вероятная причина - защита W^X на macOS ARM: на каждом входе в JVM HotSpot переключает память с JIT-кодом между режимами «запись» и «исполнение»
+- на Windows разброс замеров заметно больше (до 20-50% в отдельных строках): у процессора два вида ядер (Zen 5 и Zen 5c), и планировщик переносит поток между ними
+- на x86 `-XX:-UseSuperWord` замедляет Java ikj на 10-25%, хотя сам внутренний цикл JIT не векторизует. Почему - не разбирался
 
